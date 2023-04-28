@@ -23,7 +23,7 @@ class PagesAnalysis():
         self.images = images
         self.ocr = ocr
         self.tesseract_config = tesseract_config
-        self.pattern = r'B\s?(0[1-9])a?[-/][A-Z-/]*'
+        self.pattern = r'.{0,7}B\s?(0[1-9])a?[-/][A-Z-/]*'
 
     def __call__(self):
         #scans image by image, look at the top-right text, if text match regex pattern then takes pages and group in pattern
