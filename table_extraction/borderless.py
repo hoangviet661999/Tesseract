@@ -1,7 +1,46 @@
-import pytesseract
 import numpy as np
 import tensorflow as tf
 import pandas as pd
+from vietocr.tool.predictor import Predictor
+from vietocr.tool.config import Cfg
+from PIL import Image
+import torch
+import os
+
+def redistributed(boxes, texts):
+    new_boxes = [boxes[0]]
+    new_texts = [texts[0]]
+    for idx in range(1, len(texts)):
+        if len(texts[idx]) == 0:
+            new_boxes.append(boxes[idx])
+            new_texts.append(texts[idx])
+        else:
+            if not texts[idx][0].islower():
+                new_boxes.append(boxes[idx])
+                new_texts.append(texts[idx])
+            else:
+                b = -1
+                r = 1e9
+                for i in range(max(0,len(new_boxes)-10), len(new_boxes)):
+                    x1, y1, x2, y2 = get_coordinate(boxes[idx])
+                    x3, y3, x4, y4 = get_coordinate(new_boxes[i])
+                    if  abs(y1-y4) + abs(x1-x3) < r:
+                        r = abs(y1-y4) + abs(x1-x3)
+                        b = i
+                new_texts.append(new_texts[b]+"\n"+texts[idx])
+                new_texts.pop(b)
+
+                x1, y1, x2, y2 = get_coordinate(boxes[idx])
+                x3, y3, x4, y4 = get_coordinate(new_boxes[b])
+
+                x1_res = min(x1, x2, x3, x4)
+                x2_res = max(x1, x2, x3, x4)
+                y1_res = min(y1, y2, y3, y4)
+                y2_res = max(y1, y2, y3, y4)
+
+                new_boxes.append([[x1_res, y1_res], [x2_res, y1_res], [x2_res, y2_res], [x1_res, y2_res]])
+                new_boxes.pop(b)
+    return new_boxes, new_texts
 
 def intersection(box1, box2):
     """
@@ -44,31 +83,75 @@ class BorderlessTable():
     Returns:
         table(Dataframe): Dataframe with information and construction's table image
     """
-    def __init__(self, image, ocr, tesseract_config):
+    def __init__(self, image, ocr, tesseract_config, vietocr_weight):
         self.image = image
         self.ocr = ocr
         self.image_height = image.shape[0]
         self.image_width = image.shape[1]
         self.tesseract_config = tesseract_config
+        config = Cfg.load_config_from_name('vgg_transformer')
+        config['weights'] = vietocr_weight
+        config['device'] = 'cuda' if torch.cuda.is_available() else 'cpu'
+        config['cnn']['pretrained']=False
+        config['predictor']['beamsearch']=False
+        self.detector = Predictor(config)
 
     def __call__(self):
         #ocr image to get texts's location
         output = self.ocr.ocr(self.image)[0]
         boxes = [line[0] for line in output]
         texts = []
-        prob = [line[1][1] for line in output]
-
         #for each text's location, we recognize text
         for box in boxes:
-            x1, y1, x2, y2, = get_coordinate(box)
-            cropped_img = self.image[y1: y2, x1: x2]
-            texts.append(pytesseract.image_to_string(cropped_img, config=self.tesseract_config, lang = 'vie')[:-2])
+            x1, y1, x2, y2 = get_coordinate(box)
+            cropped_img = self.image[max(0, y1-10): min(y2+10, self.image_height), max(0, x1-10): min(x2+10, self.image_width)]
+            # texts.append(pytesseract.image_to_string(cropped_img, config=self.tesseract_config, lang = 'vie')[:-2])
+            cropped_img = Image.fromarray(cropped_img)
+            rnd = len(os.listdir('ocr'))
+            cropped_img.save('ocr/{}.jpg'.format(str(rnd)))
+            texts.append(self.detector.predict(cropped_img))
+            f = open('ocr/label.txt', "a")
+            f.write("{}\t{}\n".format(str(rnd), texts[-1]))
+            f.close()
+    
+        prob = [(self.image_width-int(box[0][0]))/self.image_width for box in boxes]
+
+        #expand the box horizontally and vertically 
+        horiz_boxes = []
+        for box in boxes:
+            x1, y1, x2, y2 = get_coordinate(box)
+            horiz_boxes.append([0, y1, self.image_width, y2])
+
+        #Selects a single box out of many overlapping boxes using non-max-suppression with iou_threshold=0.1
+        horiz_out = tf.image.non_max_suppression(
+            horiz_boxes,
+            prob,
+            max_output_size=1000,
+            iou_threshold=0.2,
+            score_threshold=float('-inf'),
+            name=None
+        )
+        horiz_line = np.sort(np.array(horiz_out))
+
+        pr = prob[0]
+        idx = 0
+        for b in horiz_line:
+            if prob[b]-pr>0.3:
+                idx = b
+                break
+
+        for b in horiz_line:
+            if b>=idx:
+                boxes[b][0][0] = 0
+
+        boxes, texts = redistributed(boxes, texts)
+        prob = [(self.image_width-int(box[0][0]))/self.image_width for box in boxes]
 
         #expand the box horizontally and vertically 
         horiz_boxes = []
         vert_boxes = []
         for box in boxes:
-            x1, y1, x2, y2, = get_coordinate(box)
+            x1, y1, x2, y2 = get_coordinate(box)
             horiz_boxes.append([0, y1, self.image_width, y2])
             vert_boxes.append([x1, 0, x2, self.image_height])
 
