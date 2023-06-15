@@ -1,8 +1,5 @@
 import numpy as np
-import pytesseract
-import re
 import cv2
-import imutils
 
 class PdfAnalysis(): 
     """
@@ -24,12 +21,10 @@ class PdfAnalysis():
     def __call__(self):
         pages = []
         for i in range(len(self.images)):
-            #read images and preprocessing: correcting text orientation, convert to gray image and binary it
+            #read images and preprocessing: convert to gray image and resize
             image = np.array(self.images[i])
-            osd = pytesseract.image_to_osd(image)
-            angle = re.search('(?<=Rotate: )\d+', osd).group(0)
-            image = imutils.rotate_bound(image, angle=int(angle))
             image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+            image = cv2.resize(image, (640, 640))
             #feed images to table detection model
             results = self.tab_model(image)
             boxes = results.xyxy[0]
@@ -49,7 +44,7 @@ class PdfAnalysis():
             image = cv2.resize(image, (640,640))
             results = self.sig_model(image)
             boxes = results.xyxy[0]
-            if len(boxes)==1 and boxes[0][4]>0.7:
+            if len(boxes)==1 and boxes[0][4]>0.5:
                 pages.append(i)
         return pages
             

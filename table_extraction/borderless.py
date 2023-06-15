@@ -5,7 +5,6 @@ from vietocr.tool.predictor import Predictor
 from vietocr.tool.config import Cfg
 from PIL import Image
 import torch
-import os
 
 def redistributed(boxes, texts):
     new_boxes = [boxes[0]]
@@ -107,12 +106,7 @@ class BorderlessTable():
             cropped_img = self.image[max(0, y1-10): min(y2+10, self.image_height), max(0, x1-10): min(x2+10, self.image_width)]
             # texts.append(pytesseract.image_to_string(cropped_img, config=self.tesseract_config, lang = 'vie')[:-2])
             cropped_img = Image.fromarray(cropped_img)
-            rnd = len(os.listdir('ocr'))
-            cropped_img.save('ocr/{}.jpg'.format(str(rnd)))
             texts.append(self.detector.predict(cropped_img))
-            f = open('ocr/label.txt', "a")
-            f.write("{}\t{}\n".format(str(rnd), texts[-1]))
-            f.close()
     
         prob = [(self.image_width-int(box[0][0]))/self.image_width for box in boxes]
 
