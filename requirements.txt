@@ -9,6 +9,10 @@ pybind11
 fastwer
 xlsxwriter
 BeautifulSoup4
+vietocr
+wand
+ultralytics
+PyYAML
 
 #Yolov5 requirements
 #Base
