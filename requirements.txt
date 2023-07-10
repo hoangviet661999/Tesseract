@@ -5,6 +5,10 @@ opencv-python
 pandas
 tensorflow-cpu
 imutils
+pybind11
+fastwer
+xlsxwriter
+BeautifulSoup4
 
 #Yolov5 requirements
 #Base
@@ -16,7 +20,3 @@ seaborn>=0.11.0
 sqlalchemy
 pymysql
 mysql-connector-python
-
-#
-pybind11
-fastwer

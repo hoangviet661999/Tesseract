@@ -7,3 +7,4 @@ ocr/
 demo.py
 *.pt
 *.pth
+*.pdf

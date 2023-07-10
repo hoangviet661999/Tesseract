@@ -64,7 +64,7 @@ def iou(box1, box2):
     box1_area = abs((box1[2]-box1[0])*(box1[3]-box1[1]))
     box2_area = abs((box2[2]-box2[0])*(box2[3]-box2[1]))
 
-    return inter / float(box1_area+box2_area-inter)
+    return inter 
 
 def get_coordinate(box):
     """
@@ -107,39 +107,9 @@ class BorderlessTable():
             # texts.append(pytesseract.image_to_string(cropped_img, config=self.tesseract_config, lang = 'vie')[:-2])
             cropped_img = Image.fromarray(cropped_img)
             texts.append(self.detector.predict(cropped_img))
-    
-        prob = [(self.image_width-int(box[0][0]))/self.image_width for box in boxes]
-
-        #expand the box horizontally and vertically 
-        horiz_boxes = []
-        for box in boxes:
-            x1, y1, x2, y2 = get_coordinate(box)
-            horiz_boxes.append([0, y1, self.image_width, y2])
-
-        #Selects a single box out of many overlapping boxes using non-max-suppression with iou_threshold=0.1
-        horiz_out = tf.image.non_max_suppression(
-            horiz_boxes,
-            prob,
-            max_output_size=1000,
-            iou_threshold=0.2,
-            score_threshold=float('-inf'),
-            name=None
-        )
-        horiz_line = np.sort(np.array(horiz_out))
-
-        pr = prob[0]
-        idx = 0
-        for b in horiz_line:
-            if prob[b]-pr>0.3:
-                idx = b
-                break
-
-        for b in horiz_line:
-            if b>=idx:
-                boxes[b][0][0] = 0
 
         boxes, texts = redistributed(boxes, texts)
-        prob = [(self.image_width-int(box[0][0]))/self.image_width for box in boxes]
+        prob = [int(box[2][1])/self.image_height for box in boxes]
 
         #expand the box horizontally and vertically 
         horiz_boxes = []
@@ -154,7 +124,7 @@ class BorderlessTable():
             horiz_boxes,
             prob,
             max_output_size=1000,
-            iou_threshold=0.1,
+            iou_threshold=0.3,
             score_threshold=float('-inf'),
             name=None
         )
@@ -164,7 +134,7 @@ class BorderlessTable():
             vert_boxes,
             prob,
             max_output_size=1000,
-            iou_threshold=0.1,
+            iou_threshold=0.0001,
             score_threshold=float('-inf'),
             name=None
         )
@@ -178,12 +148,18 @@ class BorderlessTable():
             unordered_boxes.append(vert_boxes[i][0])
         ordered_boxes = np.argsort(unordered_boxes)
 
+        metadata = {}
         for i in range(len(horiz_line)):
+            data = {}
             for j in range(len(vert_line)):
                 resultant = intersection(horiz_boxes[horiz_line[i]], vert_boxes[vert_line[ordered_boxes[j]]])
                 for b in range(len(boxes)):
                     the_box = [boxes[b][0][0], boxes[b][0][1], boxes[b][2][0], boxes[b][2][1]]
-                    if(iou(resultant, the_box)>0.1):
+                    if(iou(resultant, the_box)>0.4*((boxes[b][2][0]-boxes[b][0][0])*(boxes[b][2][1]-boxes[b][0][1]))):
+                        data[j] = {}
                         table[i][j] = texts[b]
+                        data[j]['coordinate'] = [boxes[b][0][0], boxes[b][0][1], boxes[b][2][0], boxes[b][2][1]]
+                        data[j]['text'] = texts[b]
+            metadata[i] = data
 
-        return pd.DataFrame(table)
+        return pd.DataFrame(table), metadata
