@@ -11,4 +11,4 @@ pip install paddleocr "paddleocr>=2.0.1"
 sudo apt install tesseract-ocr
 
 # Install necessary libaries
-pip install -r requirements.txt
+cat requirements.txt | xargs pip install

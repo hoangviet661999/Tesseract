@@ -13,14 +13,9 @@ vietocr
 wand
 ultralytics
 PyYAML
-
-#Yolov5 requirements
-#Base
 gitpython>=3.1.30
-thop>=0.1.1  # FLOPs computation
+thop>=0.1.1
 seaborn>=0.11.0
-
-#Database requirements
 sqlalchemy
 pymysql
 mysql-connector-python
