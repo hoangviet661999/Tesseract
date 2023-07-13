@@ -35,7 +35,7 @@ def postprocess_table(excel_path, image_path, table_engine):
             for key in td.attrs:
                 if key == "rowspan":
                     try: 
-                        worksheet.merge_range(0, idx, 1, idx, df.iloc[0, idx] + "\n" + df.iloc[1, idx], merge_format)
+                        worksheet.merge_range(0, idx, 1, idx, df.iloc[0, idx], merge_format)
                         idx+=1
                     except:
                         idx+=1
@@ -47,5 +47,4 @@ def postprocess_table(excel_path, image_path, table_engine):
                     except:
                         idx+=2
         
-
     workbook.close()

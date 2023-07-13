@@ -35,10 +35,10 @@ class PdfAnalysis():
                 x2 = int(box[2])
                 y2 = int(box[3])
                 area = (x2-x1)*(y2-y1)
-                if area/0.4 > image.shape[0]*image.shape[1]:
+                if area/0.3 > image.shape[0]*image.shape[1]:
                     pages.append(i)
                     break
-        for i in range(pages[0], 20):
+        for i in range(pages[0], min(20, len(self.images))):
             image = np.array(self.images[i])
             image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
             image = cv2.resize(image, (640,640))
