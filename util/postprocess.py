@@ -10,7 +10,6 @@ def postprocess_table(excel_path, image_path, table_engine):
     html = result[0]['res']['html']
     soup = BeautifulSoup(html, 'html.parser')
     head = soup.find('tr')
-    print(head)
     df = pd.read_csv(excel_path)
     workbook = xlsxwriter.Workbook(excel_path)
     worksheet = workbook.add_worksheet()
