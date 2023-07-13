@@ -1,11 +1,9 @@
 pdf2image
-protobuf==3.20.0
 pytesseract
 opencv-python
 pandas
 tensorflow-cpu
 imutils
-pybind11
 fastwer
 xlsxwriter
 BeautifulSoup4

@@ -111,6 +111,8 @@ def main(args):
     # psm --> page segmentation mode = 6 >> Assume as single uniform block of text (How a page of text can be analyzed)
     tesseract_config = r'--oem 3 --psm 6'
     table_engine = PPStructure(layout=False, show_log=False)
+    if not os.path.exists('result'):
+        os.mkdir('result')
     if os.path.isfile(args.dir):
         folder = args.dir.split('/')[-1]
         folder = folder.split('.')[-2]
