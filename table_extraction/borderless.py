@@ -6,7 +6,7 @@ from vietocr.tool.config import Cfg
 from PIL import Image
 import torch
 
-def redistributed(boxes, texts):
+def redistributed(boxes, texts, image_width):
     new_boxes = [boxes[0]]
     new_texts = [texts[0]]
     for idx in range(1, len(texts)):
@@ -14,10 +14,8 @@ def redistributed(boxes, texts):
             new_boxes.append(boxes[idx])
             new_texts.append(texts[idx])
         else:
-            if not texts[idx][0].islower():
-                new_boxes.append(boxes[idx])
-                new_texts.append(texts[idx])
-            else:
+            if texts[idx][0].islower() or \
+                ((texts[idx][0] == "(" or texts[idx][0] == "{" or texts[idx][0] == "[") and boxes[idx][0][0] < image_width/6):
                 b = -1
                 r = 1e9
                 for i in range(max(0,len(new_boxes)-10), len(new_boxes)):
@@ -39,6 +37,11 @@ def redistributed(boxes, texts):
 
                 new_boxes.append([[x1_res, y1_res], [x2_res, y1_res], [x2_res, y2_res], [x1_res, y2_res]])
                 new_boxes.pop(b)
+
+            else:
+                new_boxes.append(boxes[idx])
+                new_texts.append(texts[idx])
+
     return new_boxes, new_texts
 
 def intersection(box1, box2):
@@ -108,7 +111,7 @@ class BorderlessTable():
             cropped_img = Image.fromarray(cropped_img)
             texts.append(self.detector.predict(cropped_img))
 
-        boxes, texts = redistributed(boxes, texts)
+        boxes, texts = redistributed(boxes, texts, self.image_width)
         prob = [int(box[2][1])/self.image_height for box in boxes]
 
         #expand the box horizontally and vertically 
