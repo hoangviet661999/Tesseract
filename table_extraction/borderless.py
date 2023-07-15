@@ -158,7 +158,7 @@ class BorderlessTable():
                 resultant = intersection(horiz_boxes[horiz_line[i]], vert_boxes[vert_line[ordered_boxes[j]]])
                 for b in range(len(boxes)):
                     the_box = [boxes[b][0][0], boxes[b][0][1], boxes[b][2][0], boxes[b][2][1]]
-                    if(iou(resultant, the_box)>0.4*((boxes[b][2][0]-boxes[b][0][0])*(boxes[b][2][1]-boxes[b][0][1]))):
+                    if(iou(resultant, the_box)>0.3*((boxes[b][2][0]-boxes[b][0][0])*(boxes[b][2][1]-boxes[b][0][1]))):
                         data[j] = {}
                         table[i][j] = texts[b]
                         data[j]['coordinate'] = [boxes[b][0][0], boxes[b][0][1], boxes[b][2][0], boxes[b][2][1]]

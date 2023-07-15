@@ -27,7 +27,7 @@ def take_page(images, start, end, tab_model, ocr, tesseract_config, vietocr_weig
         y1 = int(boxes[1])
         x2 = int(boxes[2])
         y2 = int(boxes[3])
-        im = image[y1:y2, max(0, x1-30):min(x2+30, image.shape[1])]
+        im = image[max(0,y1-10):y2, max(0, x1-30):min(x2+30, image.shape[1])]
         
         #write table image
         if not os.path.exists('result/{}/{}'.format(folder, name)):
@@ -48,10 +48,10 @@ def take_page(images, start, end, tab_model, ocr, tesseract_config, vietocr_weig
             json.dump(metadata, f, ensure_ascii=False, indent=4)
 
         #process cell span
-        postprocess_table('result/{}/{}/image{}.xlsx'.format(folder, name, str(i)), 'result/{}/{}/image{}.jpg'.format(folder, name, str(i)), table_engine)
+        # postprocess_table('result/{}/{}/image{}.xlsx'.format(folder, name, str(i)), 'result/{}/{}/image{}.jpg'.format(folder, name, str(i)), table_engine)
 
 def parse_pdf(dir, sig_model, tab_model, ocr, tesseract_config, vietocr_weight, table_engine, folder):
-    images = convert_from_path(dir, dpi=300)
+    images = convert_from_path(dir, dpi=400)
 
     pdf = PdfAnalysis(images, tab_model, sig_model)
     pages = pdf()
