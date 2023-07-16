@@ -113,7 +113,7 @@ class BorderlessTable():
 
         boxes, texts = redistributed(boxes, texts, self.image_width)
         prob = [int(box[2][1])/self.image_height for box in boxes]
-        h_prob = [(int(box[2][0])-int(box[0][0]))*(int(box[2][1])-int(box[0][1])) for box in boxes]
+        h_prob = [(int(box[2][1])-int(box[0][1])) for box in boxes]
 
         #expand the box horizontally and vertically 
         horiz_boxes = []
