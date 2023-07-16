@@ -113,6 +113,7 @@ class BorderlessTable():
 
         boxes, texts = redistributed(boxes, texts, self.image_width)
         prob = [int(box[2][1])/self.image_height for box in boxes]
+        h_prob = [(int(box[2][0])-int(box[0][0]))*(int(box[2][1])-int(box[0][1])) for box in boxes]
 
         #expand the box horizontally and vertically 
         horiz_boxes = []
@@ -125,7 +126,7 @@ class BorderlessTable():
         #Selects a single box out of many overlapping boxes using non-max-suppression with iou_threshold=0.1
         horiz_out = tf.image.non_max_suppression(
             horiz_boxes,
-            prob,
+            h_prob,
             max_output_size=1000,
             iou_threshold=0.3,
             score_threshold=float('-inf'),
@@ -158,9 +159,15 @@ class BorderlessTable():
                 resultant = intersection(horiz_boxes[horiz_line[i]], vert_boxes[vert_line[ordered_boxes[j]]])
                 for b in range(len(boxes)):
                     the_box = [boxes[b][0][0], boxes[b][0][1], boxes[b][2][0], boxes[b][2][1]]
-                    if(iou(resultant, the_box)>0.3*((boxes[b][2][0]-boxes[b][0][0])*(boxes[b][2][1]-boxes[b][0][1]))):
+                    if(iou(resultant, the_box)>0.2*((boxes[b][2][0]-boxes[b][0][0])*(boxes[b][2][1]-boxes[b][0][1]))):
                         data[j] = {}
-                        table[i][j] = texts[b]
+                        if table[i][j] != "":
+                            if j <=1: 
+                                table[i][j] = table[i][j] + " " + texts[b]
+                            else:
+                                table[i][j] = table[i][j] + "\n" + texts[b]
+                        else:
+                            table[i][j] = texts[b]
                         data[j]['coordinate'] = [boxes[b][0][0], boxes[b][0][1], boxes[b][2][0], boxes[b][2][1]]
                         data[j]['text'] = texts[b]
             metadata[i] = data
