@@ -156,11 +156,11 @@ class BorderlessTable():
         for i in range(len(horiz_line)):
             data = {}
             for j in range(len(vert_line)):
+                data[j] = {}
                 resultant = intersection(horiz_boxes[horiz_line[i]], vert_boxes[vert_line[ordered_boxes[j]]])
                 for b in range(len(boxes)):
                     the_box = [boxes[b][0][0], boxes[b][0][1], boxes[b][2][0], boxes[b][2][1]]
                     if(iou(resultant, the_box)>0.2*((boxes[b][2][0]-boxes[b][0][0])*(boxes[b][2][1]-boxes[b][0][1]))):
-                        data[j] = {}
                         if table[i][j] != "":
                             if j <=1: 
                                 table[i][j] = table[i][j] + " " + texts[b]
@@ -168,8 +168,16 @@ class BorderlessTable():
                                 table[i][j] = table[i][j] + "\n" + texts[b]
                         else:
                             table[i][j] = texts[b]
-                        data[j]['coordinate'] = [boxes[b][0][0], boxes[b][0][1], boxes[b][2][0], boxes[b][2][1]]
-                        data[j]['text'] = texts[b]
+                        if 'coordinate' in data[j].keys():
+                            x1, y1, x2, y2 = data[j]['coordinate'][0], data[j]['coordinate'][1], data[j]['coordinate'][2], data[j]['coordinate'][3]
+                            x1_res = min(x1, x2, boxes[b][0][0], boxes[b][2][0])
+                            x2_res = max(x1, x2, boxes[b][0][0], boxes[b][2][0])
+                            y1_res = min(y1, y2, boxes[b][0][1], boxes[b][2][1])
+                            y2_res = max(y1, y2, boxes[b][0][1], boxes[b][2][1])
+                            data[j]['coordinate'] = [x1_res, y1_res, x2_res, y2_res]
+                        else: 
+                            data[j]['coordinate'] = [boxes[b][0][0], boxes[b][0][1], boxes[b][2][0], boxes[b][2][1]]
+                        data[j]['text'] = table[i][j]
             metadata[i] = data
 
         return pd.DataFrame(table), metadata
