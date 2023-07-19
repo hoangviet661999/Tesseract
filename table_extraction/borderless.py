@@ -15,7 +15,7 @@ def redistributed(boxes, texts, image_width):
             new_texts.append(texts[idx])
         else:
             if texts[idx][0].islower() or \
-                ((texts[idx][0] == "(" or texts[idx][0] == "{" or texts[idx][0] == "[") and boxes[idx][0][0] < image_width/6):
+                ((texts[idx][0] == "(" or texts[idx][0] == "{" or texts[idx][0] == "[") and texts[idx][1:5]!="Tăng" and boxes[idx][0][0] < image_width/6):
                 b = -1
                 r = 1e9
                 for i in range(max(0,len(new_boxes)-10), len(new_boxes)):

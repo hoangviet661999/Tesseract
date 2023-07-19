@@ -44,7 +44,9 @@ class PdfAnalysis():
             image = cv2.resize(image, (640,640))
             results = self.sig_model(image)
             boxes = results.xyxy[0]
-            if len(boxes)==1 and boxes[0][4]>0.5:
+            if len(boxes)==1 and boxes[0][4]>0.3:
                 pages.append(i)
+                if len(pages) == 4:
+                    break
         return pages
             
