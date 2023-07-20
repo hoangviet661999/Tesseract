@@ -12,7 +12,7 @@ import cv2
 import json
 from wand.image import Image
 import time
-from paddleocr import PPStructure
+from util.json2db import OCRDatabase
 
 def take_page(images, start, end, tab_model, ocr, tesseract_config, vietocr_weight, folder, name):
     for i in range(start, end):
@@ -42,12 +42,13 @@ def take_page(images, start, end, tab_model, ocr, tesseract_config, vietocr_weig
         #write table csv and table json
         extract_information = BorderlessTable(im, ocr, tesseract_config, vietocr_weight)
         df, metadata = extract_information()
-        df.to_csv('result/{}/{}/image{}.xlsx'.format(folder, name, str(i)))
+        df.to_excel('result/{}/{}/image{}.xlsx'.format(folder, name, str(i)))
         with open('result/{}/{}/image{}.json'.format(folder, name, str(i)), "w") as f:
             json.dump(metadata, f, ensure_ascii=False, indent=4)
 
-        #process cell span
-        # postprocess_table('result/{}/{}/image{}.xlsx'.format(folder, name, str(i)), 'result/{}/{}/image{}.jpg'.format(folder, name, str(i)), table_engine)
+        #Write json to database
+        db = OCRDatabase("Table", 'result/{}/{}/image{}.json'.format(folder, name, str(i)))
+        db()
 
 def parse_pdf(dir, sig_model, tab_model, ocr, tesseract_config, vietocr_weight, folder):
     images = convert_from_path(dir, dpi=400)
@@ -98,6 +99,10 @@ def parse_pdf(dir, sig_model, tab_model, ocr, tesseract_config, vietocr_weight, 
         #write text json
         with open('result/{}/{}/image{}.json'.format(folder,  "financial_statement", str(i)), "w") as f:
             json.dump(metadata, f, ensure_ascii=False, indent=4)
+
+        #Write json to database
+        db = OCRDatabase("Text", 'result/{}/{}/image{}.json'.format(folder, "financial_statement", str(i)))
+        db()
     
 def main(args):
     start = time.time()
@@ -109,7 +114,6 @@ def main(args):
     # oem --> OCR engine mode = 3 >> Legacy + LSTM mode only (LSTM neutral net mode works the best)
     # psm --> page segmentation mode = 6 >> Assume as single uniform block of text (How a page of text can be analyzed)
     tesseract_config = r'--oem 3 --psm 6'
-    table_engine = PPStructure(layout=False, show_log=False)
     if not os.path.exists('result'):
         os.mkdir('result')
     if os.path.isfile(args.dir):
