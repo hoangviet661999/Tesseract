@@ -4,6 +4,7 @@ pages/
 __pycache__/
 result/
 ocr/
+ocr_v2/
 demo.py
 *.pt
 *.pth
