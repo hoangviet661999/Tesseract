@@ -9,3 +9,5 @@ demo.py
 *.pt
 *.pth
 *.pdf
+log.txt
+runs/
