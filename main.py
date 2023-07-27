@@ -72,12 +72,36 @@ def parse_pdf(dir, sig_model, tab_model, ocr, tesseract_config, vietocr_weight, 
         boxes = results.xyxy[0]
 
         if len(boxes)>0:
+            idx = 0
             for box in boxes:
-                if box[4] > 0.2: 
+                if box[4] > 0.5: 
                     x1 = int(box[0])
                     y1 = int(box[1])
                     x2 = int(box[2])
                     y2 = int(box[3])
+                    im = image[max(0, y1-30):min(y2+30, image.shape[0]), max(0, x1-30):min(x2+30, image.shape[1])]
+                    #process table
+                    if not os.path.exists('result/{}/{}'.format(folder, "financial_statement")):
+                        os.mkdir('result/{}/{}'.format(folder, "financial_statement"))
+                    cv2.imwrite('result/{}/{}/image{}_{}.jpg'.format(folder, "financial_statement", str(i), str(idx)), im)
+
+                    with Image(filename='result/{}/{}/image{}_{}.jpg'.format(folder, "financial_statement", str(i), str(idx))) as img:
+                        img.deskew(0.5*img.quantum_range)
+                        img.save(filename='result/{}/{}/image{}_{}.jpg'.format(folder, "financial_statement", str(i), str(idx)))
+
+                    im = cv2.imread('result/{}/{}/image{}_{}.jpg'.format(folder, "financial_statement", str(i), str(idx)))
+
+                    #write table csv and table json
+                    extract_information = BorderlessTable(im, ocr, tesseract_config, vietocr_weight)
+                    df, metadata = extract_information()
+                    df.to_excel('result/{}/{}/image{}_{}.xlsx'.format(folder, "financial_statement", str(i), str(idx)))
+                    with open('result/{}/{}/image{}_{}.json'.format(folder, "financial_statement", str(i), str(idx)), "w") as f:
+                        json.dump(metadata, f, ensure_ascii=False, indent=4)
+
+                    #Write json to database
+                    db = OCRDatabase("Table", 'result/{}/{}/image{}_{}.json'.format(folder, "financial_statement", str(i), str(idx)))
+                    db()
+                    idx+=1
                     image[max(0, y1-30):min(y2+30, image.shape[0]), max(0, x1-30):min(x2+30, image.shape[1])] = 255
 
         if not os.path.exists('result/{}/{}'.format(folder, "financial_statement")):
